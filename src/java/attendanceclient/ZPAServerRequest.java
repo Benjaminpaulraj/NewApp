@@ -27,8 +27,7 @@ public class ZPAServerRequest {
         int dataCount = 0;
 
         String authtoken = ConfigInfo.getAuthtoken();
-        String targetURL = "http://benjamin-1215.csez.zohocorpin.com:9191/people/api/attendance/bulkImport";
-        //String targetURL = "https://people.zoho.com/people/api/attendance/bulkImport";
+        String targetURL = "https://people.zoho.com/people/api/attendance/bulkImport";
         String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
         
