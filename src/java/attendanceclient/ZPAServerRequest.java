@@ -30,8 +30,6 @@ public class ZPAServerRequest {
         String targetURL = "https://people.zoho.com/people/api/attendance/bulkImport";
         String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
-        
-
         try {
             if (dataArr.isEmpty()) {
                 return;
@@ -41,9 +39,9 @@ public class ZPAServerRequest {
             PostMethod post = null;
 
             HttpClient httpclient = new HttpClient();
-            if (false && !ConfigInfo.getProxyHostIP().equals("")) {
-                httpclient.getHostConfiguration().setProxy(ConfigInfo.getProxyHostIP(), Integer.parseInt(ConfigInfo.getProxyHostPort()));//"192.168.5.168", 3128);
-                httpclient.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(ConfigInfo.getProxyUsername(), ConfigInfo.getProxyPassword())); //"pinnacle", "clepin"));
+            if (!ConfigInfo.getProxyHostIP().equals("")) {
+                httpclient.getHostConfiguration().setProxy(ConfigInfo.getProxyHostIP(), Integer.parseInt(ConfigInfo.getProxyHostPort()));
+                httpclient.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(ConfigInfo.getProxyUsername(), ConfigInfo.getProxyPassword()));
             }
             LOGGER.log(Level.INFO, "before {0} {1} {2}", new Object[]{ConfigInfo.reqCount, ConfigInfo.timeTakenTotal,ConfigInfo.dataCount});
             /*-------------------------------------- Execute the http request--------------------------------*/

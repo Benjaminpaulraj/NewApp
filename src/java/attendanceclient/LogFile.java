@@ -44,6 +44,7 @@ public class LogFile {
                 SimpleFormatter formatter = new SimpleFormatter();
                 fh.setFormatter(formatter);
             }
+            LOGGER.log(Level.INFO, " handler added {0}", fh);
             LOGGER.addHandler(fh);
         } catch (Exception ex) {
             ex.printStackTrace();

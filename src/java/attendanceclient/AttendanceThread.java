@@ -41,8 +41,6 @@ public class AttendanceThread extends Thread {
 
     @Override
     public void run() {
-        LOGGER.log(Level.INFO, "\n\n\n\n\n\n\n  thread called " + isStopped + "=====" + requestCount);
-
         while (!isStopped) {
             LogFile.configLogger();  
             try {
@@ -56,18 +54,13 @@ public class AttendanceThread extends Thread {
                 ConfigInfo.logString.append(ttime);
                 ConfigInfo.logString.append("\t").append(ftime);
                 ConfigInfo.logString.append("\t").append(ttime);
+                LOGGER.log(Level.INFO, "\n\n\n\n  thread run {0} ===== {1}", new Object[]{ftime, ttime});
                 ZPAServerRequest.sendArrayHTTPRequest(SQLAccess.readFromMSSQLServer(ftime, ttime), now);
 
                 ConfigInfo.writeFile();
                 LogFile.LOGGER.log(Level.INFO,ConfigInfo.logString.toString());
                 
-                LOGGER.log(Level.INFO, "\n valueee {0}", ConfigInfo.reqSuccessCount);
-                LOGGER.log(Level.INFO, "\n\n\n\n\n config val\n\n\n====>>>>{0}", ConfigInfo.config);
-
-                
                 long sleepTime = ConfigInfo.getSleepTime();
-                
-                LOGGER.log(Level.INFO, "\n\n\n\n\n gonna sleep\n\n\n====>>>>{0}", sleepTime);
                 AttendanceThread.sleep(sleepTime);
                 
             } catch (Exception ex) {

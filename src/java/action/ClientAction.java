@@ -142,7 +142,6 @@ public class ClientAction extends org.apache.struts.action.Action {
             
             attendanceThread = null;
             
-        } else if (mode.equals("setTimeZone")) {
         } else if (mode.equals("getLogs")) {
             
             JSONObject obj = new JSONObject();
