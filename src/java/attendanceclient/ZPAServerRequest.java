@@ -60,6 +60,7 @@ public class ZPAServerRequest {
                     post = new PostMethod(targetURL);
                     post.setParameter("authtoken", authtoken);
                     post.setParameter("dateFormat", dateTimeFormat);
+                    post.setParameter("timeZone",ConfigInfo.getTimeZone());
                     post.setParameter("data", val);
 
                     Date beforeReq = new Date();
