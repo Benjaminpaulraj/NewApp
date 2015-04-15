@@ -239,6 +239,7 @@ public class ConfigInfo {
     }
 
     public static void clearStatInfo() {
+        LOGGER.info("clearStatInfo called");
         reqCount = 0;
         reqSuccessCount = 0;
         dataCount = 0;

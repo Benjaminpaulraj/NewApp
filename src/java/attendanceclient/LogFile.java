@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package attendanceclient;
 
 import java.io.BufferedReader;
@@ -13,10 +10,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-/**
- *
- * @author benjamin-1215
- */
 public class LogFile {
 
     public static final Logger LOGGER = Logger.getLogger("LogFile");
@@ -25,6 +18,7 @@ public class LogFile {
     public static void configLogger() {
         try {
             String pattern = getLogFilePattern();
+            LOGGER.log(Level.INFO, "handler called {0} {1} {2}", new Object[]{fh, ConfigInfo.currentFileName, pattern});
             if (fh != null && ConfigInfo.currentFileName != null && ConfigInfo.currentFileName.equals(pattern)) {
                 return;
             }
@@ -36,7 +30,7 @@ public class LogFile {
                     fh.flush();
                     fh.close();
                     LOGGER.removeHandler(fh);
-                    fh=null;
+                    fh = null;
                 }
             }
             if (fh == null) {
