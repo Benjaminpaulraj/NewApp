@@ -18,7 +18,7 @@ public class LogFile {
     public static void configLogger() {
         try {
             String pattern = getLogFilePattern();
-            LOGGER.log(Level.INFO, "handler called {0} {1} {2}", new Object[]{fh, ConfigInfo.currentFileName, pattern});
+            LOGGER.log(Level.INFO, "  handler called {0} {1} {2}", new Object[]{fh, ConfigInfo.currentFileName, pattern});
             if (fh != null && ConfigInfo.currentFileName != null && ConfigInfo.currentFileName.equals(pattern)) {
                 return;
             }
