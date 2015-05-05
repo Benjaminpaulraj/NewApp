@@ -1,3 +1,38 @@
+var matched, browser;
+
+jQuery.uaMatch = function( ua ) {
+    ua = ua.toLowerCase();
+
+    var match = /(chrome)[ \/]([\w.]+)/.exec( ua ) ||
+    /(webkit)[ \/]([\w.]+)/.exec( ua ) ||
+    /(opera)(?:.*version|)[ \/]([\w.]+)/.exec( ua ) ||
+    /(msie) ([\w.]+)/.exec( ua ) ||
+    ua.indexOf("compatible") < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec( ua ) ||
+    [];
+
+    return {
+        browser: match[ 1 ] || "",
+        version: match[ 2 ] || "0"
+    };
+};
+
+matched = jQuery.uaMatch( navigator.userAgent );
+browser = {};
+
+if ( matched.browser ) {
+    browser[ matched.browser ] = true;
+    browser.version = matched.version;
+}
+
+// Chrome is Webkit, but Webkit is also Safari.
+if ( browser.chrome ) {
+    browser.webkit = true;
+} else if ( browser.webkit ) {
+    browser.safari = true;
+}
+
+jQuery.browser = browser;
+
 var Attendance={};
 Attendance.sleeptime = 1;
 Attendance.lastReqTime = 0;
@@ -50,6 +85,10 @@ function onLoad(){
     $("#dbQuery").blur(function(){
         $(this).css("border-color", "#ddd")
     })
+    $(".js-example-placeholder-single").select2({
+        placeholder: "Today",
+        allowClear: true
+    });
     getInfo();
 //displayClock()
 }
@@ -65,9 +104,6 @@ function displayClock() {
         getInfo();
         return;
     }
-    
-    var now= new Date(new Date().getTime()+diffTime);
-    
     $("#displayClock span")[0].innerHTML = nextUpdateSecs--+"secs";
     timer=setTimeout(function(){
         displayClock();
@@ -89,51 +125,96 @@ function getInfo(){
             return;
         }
         res = JSON.parse(res);
-        if (res.isRunning == true){
-            showLogsPage(res);
-        } else{
-            showConfigPage(res);
-        }
+        showLogsPage(res);
     });
 }
 
 function showConfigPage(res){
-    $("#info").hide();
-    $("#logs").hide();
-    $("#displayClock").hide();
-    $("#logsHeader").hide();
-    $("#addInput").show();
-    $("#lastRefreshTime").hide();
-    $("#authToken").val(res.info.authtoken);
-    $("#startTime").val(res.info.lastRequestTimeInDate.split(" ")[1]);
-    $("#sleepTime").val(res.info.sleepTime / (60 * 1000));
-    $("#host").val(res.info.proxyHostIP);
-    $("#port").val(res.info.proxyPort);
-    $("#proxyUserName").val(res.info.proxyUname);
-    $("#proxyPassword").val(res.info.proxyPwd);
-    $("#dbConnectionUrl").val(res.info.dburl);
-    $("#dbUserName").val(res.info.dbuname);
-    $("#dbPassword").val(res.info.dbpword);
-    $("#dbQuery").val(res.info.dbquery);
-    $("#timeZone").val(res.info.timeZone);
-    $("#logs1")[0].style.display="none";
+    var param={};
+    param.mode="getConfInfo";
+    $.post("/ZAttendance/ClientAction.do",param,function(res){
+        if(!res){
+            return;
+        }
+        res = JSON.parse(res);
+        $("#authToken").val(res.authtoken);
+        $("#startTime").val(res.lastRequestTimeInDate.split(" ")[1]);
+        $("#sleepTime").val(res.sleepTime / (60 * 1000));
+        $("#host").val(res.proxyHostIP);
+        $("#port").val(res.proxyPort);
+        $("#proxyUserName").val(res.proxyUname);
+        $("#proxyPassword").val(res.proxyPwd);
+        $("#dbConnectionUrl").val(res.dburl);
+        $("#dbUserName").val(res.dbuname);
+        $("#dbPassword").val(res.dbpword);
+        $("#dbQuery").val(res.dbquery);
+        $("#timeZone").val(res.timeZone);
+        $('.dvmodal-overlay').fadeIn(200, function() {
+            $('#dvmodal-lft').animate({
+                'right': '0'
+            }, 400);
+        });
+        $("#startTime")[0].val = res.lastRequestTimeInDate.split(" ")[1];
+        $("#sleepTime")[0].val = res.sleepTime / (60 * 1000);
+        $("#host")[0].val = res.proxyHostIP;
+        $("#port")[0].val = res.proxyPort;
+        $("#proxyUserName")[0].val = res.proxyUname;
+        $("#dbConnectionUrl")[0].val = res.dburl;
+        $("#dbUserName")[0].val = res.dbuname;
+        $("#dbQuery")[0].val = res.dbquery;  
+    });
+}
+
+function hideConfigPage(){
+    $('#dvmodal-lft').animate({
+        'right': '-75%'
+    }, 400, function() {
+        $('.dvmodal-overlay').fadeOut('fast');
+    });
 }
   
+function getLogs(fileName){
+    if(timer!=null){
+        clearTimeout(timer);
+    }
+    var param={};
+    param.mode="getLogs";
+    if(fileName!=null && fileName.trim()!=""){
+        param.fileName=fileName;
+    }else{
+        getInfo();
+        return;
+    }
+    $.post("/ZAttendance/ClientAction.do",param,function(res){
+        if(!res){
+            return;
+        }
+        res = JSON.parse(res);
+        $("#logs1")[0].innerHTML = res.logs;
+    });
+}  
 
 function showLogsPage(res){
-    $("#info").show();
-    $("#logs").show();
-    $("#displayClock").show();
-    $("#logsHeader").show();
-    $("#addInput").hide();
-    $("#lastRefreshTime").show();
     $("#logs1")[0].innerHTML = res.logs;
-    $("#logs1")[0].style.display="block";
-    Attendance.setValues(res.statinfo);
-    $("#lastRefreshTime span")[0].innerHTML = res.lastRequestTime;    
-    nextUpdateSecs=res.nextUpdateSecs;
-    diffTime=res.offsetVal;
-    displayClock();
+    setReportVal(res.statinfo);
+    $("#lastRefreshTime span")[0].innerHTML = res.lastRequestTime;
+    $("#selectDay option").remove();
+    for(var i=res.logsFiles.length-1;i>=0;i--){
+        $("#selectDay").append("<option>"+res.logsFiles[i]+"</option>")
+    }
+    if(res.isRunning){
+        nextUpdateSecs=res.nextUpdateSecs;
+        diffTime=res.offsetVal;
+        displayClock();
+        $("#stopSync").show();
+        $("#resumeSync").hide();
+        $("#resumeSync2").hide();
+    }else{
+        $("#stopSync").hide();
+        $("#resumeSync").show();
+        $("#resumeSync2").show();
+    }
+    
 }
 
 function saveStart(){
@@ -199,17 +280,13 @@ function saveStart(){
         $("#timeZone").css("border-color", "red")
         return;
     }    
-
+    hideConfigPage();
     $.post("/ZAttendance/ClientAction.do",param,function(res){
         if(!res){
             return;
         }
         res = JSON.parse(res);
-        if (res.isRunning == true){
-            getInfo();
-        } else{
-            showConfigPage(res);
-        }
+        getInfo();
     });
 }
 
@@ -219,16 +296,23 @@ function checkTime(i) {
     }
     return i;
 }
-function resume(){
+function Resume(){
     var param={};
     param.mode="resume";
+    hideConfigPage();
+    $("#stopSync").show();
+    $("#resumeSync").hide();
+    $("#resumeSync2").hide();
+
     $.post("/ZAttendance/ClientAction.do",param,function(){
-        getInfo();
+        setTimeout(function(){
+            getInfo();
+        },3000);
+        
     });
 }
     
 function stop(confirmed){
-    
     if(!confirmed && confirm("Do you really want to stop ?")){
         stop(true);
     }else{
@@ -242,7 +326,8 @@ function stop(confirmed){
     });
 }
     
-Attendance.setValues=function(obj){
+setReportVal=function(obj){
+    if(obj==null)return;
     $("#numOfDataSent")[0].innerHTML = obj.dataCount;
     $("#numberOfSuccreqSent")[0].innerHTML = obj.reqSuccesCount;
     $("#failedReq")[0].innerHTML = obj.reqFailCount;

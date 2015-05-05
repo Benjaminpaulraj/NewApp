@@ -24,8 +24,8 @@ public class AttendanceThread extends Thread {
         if (this.isAlive()) {
             return;
         }
-        
-        if(!ConfigInfo.getTimeZone().equals("")){
+
+        if (!ConfigInfo.getTimeZone().equals("")) {
             TimeZone.setDefault(TimeZone.getTimeZone(ConfigInfo.getTimeZone()));
         }
         this.start();
@@ -42,7 +42,7 @@ public class AttendanceThread extends Thread {
     @Override
     public void run() {
         while (!isStopped) {
-            LogFile.configLogger();  
+            //LogFile.configLogger();
             try {
                 String dateformat = "yyyy-MM-dd HH:mm:ss";
 
@@ -50,19 +50,17 @@ public class AttendanceThread extends Thread {
                 String ftime = new SimpleDateFormat(dateformat).format(new Date(ConfigInfo.getLastRequestTime()));
                 String ttime = new SimpleDateFormat(dateformat).format(now.getTime());
 
-                ConfigInfo.logString= new StringBuilder();
-                ConfigInfo.logString.append(ttime);
-                ConfigInfo.logString.append("\t").append(ftime);
-                ConfigInfo.logString.append("\t").append(ttime);
+                LogFile.appendLog(ttime);
+                LogFile.appendLog("," + ftime);
+                LogFile.appendLog("," + ttime);
                 LOGGER.log(Level.INFO, "\n\n\n\n  thread run {0} ===== {1}", new Object[]{ftime, ttime});
                 ZPAServerRequest.sendArrayHTTPRequest(SQLAccess.readFromMSSQLServer(ftime, ttime), now);
-
+                LogFile.appendLog("\n");
                 ConfigInfo.writeFile();
-                LogFile.LOGGER.log(Level.INFO,ConfigInfo.logString.toString());
-                
+
                 long sleepTime = ConfigInfo.getSleepTime();
                 AttendanceThread.sleep(sleepTime);
-                
+
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
             }

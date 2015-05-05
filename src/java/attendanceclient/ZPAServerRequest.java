@@ -55,7 +55,7 @@ public class ZPAServerRequest {
                         return;
                     }
                     if(result!=0){
-                        ConfigInfo.logString.append("<br>\t\t\t");
+                        LogFile.appendLog("<br>,,,");
                     }
                     post = new PostMethod(targetURL);
                     post.setParameter("authtoken", authtoken);
@@ -77,9 +77,9 @@ public class ZPAServerRequest {
                         timeTaken = (new Date().getTime() - beforeReq.getTime()) + "ms";
                     }
 
-                    ConfigInfo.logString.append("\t").append(dataCount);
-                    ConfigInfo.logString.append("\t").append(result);
-                    ConfigInfo.logString.append("\t").append(timeTaken);
+                    LogFile.appendLog(","+dataCount);
+                    LogFile.appendLog(","+result);
+                    LogFile.appendLog(","+timeTaken);
                     ConfigInfo.reqCount++;
                     if (result == 200) {
                         LOGGER.log(Level.INFO, "HTTP Response status code: {0}", result);
@@ -98,8 +98,6 @@ public class ZPAServerRequest {
                 }
                 if (result == 200) {
                     ConfigInfo.setLastRequestTime(now.getTime());
-                } else {
-                    ConfigInfo.logString.append("\t").append(result);
                 }
 
 
@@ -108,14 +106,14 @@ public class ZPAServerRequest {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                ConfigInfo.logString.append("\t").append(e);
+                LogFile.appendLog(e+"");
             } finally {
                 if (post != null) {
                     post.releaseConnection();
                 }
             }
         } catch (Exception e) {
-            ConfigInfo.logString.append("\t").append(e);
+            LogFile.appendLog(e+"");
         }
     }
 }

@@ -98,13 +98,13 @@ private static final Logger LOGGER = Logger.getLogger("SQLAccess");
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
-            ConfigInfo.logString.append("\t").append(e);
+            LogFile.appendLog(e+"");
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (SQLException ex) {
-                    ConfigInfo.logString.append("\t").append(ex);
+                    LogFile.appendLog(ex+"");
                     Logger.getLogger(SQLAccess.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }

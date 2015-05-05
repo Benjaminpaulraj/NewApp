@@ -31,63 +31,68 @@ public class ClientAction extends org.apache.struts.action.Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response)
             throws Exception {
-        
+
         response.setCharacterEncoding("UTF-8");
         String mode = request.getParameter("mode");
         JSONObject confobj = ConfigInfo.getConfInfo();
         PrintWriter out = response.getWriter();
-        
-        
+
+
         if (mode == null) {
             out.print("invalid input");
             return null;
         }
-        
+
         LOGGER.log(Level.INFO, "server request ", mode);
-        
+
         if (attendanceThread == null) {
             attendanceThread = new AttendanceThread();
         }
         if (mode.equals("getInfo")) {
             JSONObject obj = new JSONObject();
             obj.put("isRunning", attendanceThread.isRunning());
-            
-            if (!attendanceThread.isRunning()) {
-                JSONObject info = new JSONObject();
-                info.put("dbquery", ConfigInfo.getDBQuery());
-                info.put("dburl", ConfigInfo.getDBurl());
-                info.put("dbuname", ConfigInfo.getDBusername());
-                info.put("dbpword", "password");
-                
-                info.put("proxyUname", ConfigInfo.getProxyUsername());
-                info.put("proxyPwd", "password");
-                info.put("proxyHostIP", ConfigInfo.getProxyHostIP());
-                info.put("proxyPort", ConfigInfo.getProxyHostPort());
-                
-                info.put("authtoken", "authtoken");
-                info.put("lastRequestTime", ConfigInfo.getLastRequestTime());
-                info.put("lastRequestTimeInDate", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(ConfigInfo.getLastRequestTime())));
-                info.put("sleepTime", ConfigInfo.getSleepTime());
-                info.put("timeZone", ConfigInfo.getTimeZone());
-                obj.put("info", info);
+            obj.put("lastRequestTime", new SimpleDateFormat("HH:mm:ss (dd/MM/yyyy)").format(new Date(ConfigInfo.getLastRequestTime())));
+            if (new Date().getTime() - ConfigInfo.getLastRequestTime() < ConfigInfo.getSleepTime()) {
+                obj.put("nextUpdateSecs", (ConfigInfo.getSleepTime() - new Date().getTime() + ConfigInfo.getLastRequestTime()) / 1000);
             } else {
-                obj.put("lastRequestTime", new SimpleDateFormat("HH:mm:ss (dd/MM/yyyy)").format(new Date(ConfigInfo.getLastRequestTime())));
-                if (new Date().getTime() - ConfigInfo.getLastRequestTime() < ConfigInfo.getSleepTime()) {
-                    obj.put("nextUpdateSecs", (ConfigInfo.getSleepTime() - new Date().getTime() + ConfigInfo.getLastRequestTime()) / 1000);
-                } else {
-                    obj.put("nextUpdateSecs", ConfigInfo.getSleepTime() / 1000);
-                }
-                JSONObject statinfo = ConfigInfo.getstatinfo();
-                obj.put("statinfo", statinfo);
-                obj.put("logs", LogFile.getLogs());
-                obj.put("offsetVal", TimeZone.getTimeZone(ConfigInfo.getTimeZone()).getRawOffset());
-                obj.put("time", new Date().getTime());
+                obj.put("nextUpdateSecs", ConfigInfo.getSleepTime() / 1000);
             }
+            JSONObject statinfo = ConfigInfo.getstatinfo();
+            obj.put("statinfo", statinfo);
+            obj.put("logs", LogFile.getLogs(null));
+            obj.put("offsetVal", TimeZone.getTimeZone(ConfigInfo.getTimeZone()).getRawOffset());
+            obj.put("time", new Date().getTime());
             obj.put("currentTimeGMT1", new Date());
+            obj.put("logsFiles",(Object)LogFile.listFilesForFolder());
             out.print(obj);
+        } else if (mode.equals("getConfInfo")) {
+            JSONObject info = new JSONObject();
+            info.put("dbquery", ConfigInfo.getDBQuery());
+            info.put("dburl", ConfigInfo.getDBurl());
+            info.put("dbuname", ConfigInfo.getDBusername());
+            info.put("dbpword", "password");
+
+            info.put("proxyUname", ConfigInfo.getProxyUsername());
+            info.put("proxyPwd", "password");
+            info.put("proxyHostIP", ConfigInfo.getProxyHostIP());
+            info.put("proxyPort", ConfigInfo.getProxyHostPort());
+
+            info.put("authtoken", "authtoken");
+            info.put("lastRequestTime", ConfigInfo.getLastRequestTime());
+            info.put("lastRequestTimeInDate", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(ConfigInfo.getLastRequestTime())));
+            info.put("sleepTime", ConfigInfo.getSleepTime());
+            info.put("timeZone", ConfigInfo.getTimeZone());
+            out.print(info);
+                    
         } else if (mode.equals("start") || mode.equals("resume")) {
             JSONObject obj = new JSONObject();
+            
+            if(attendanceThread.isRunning()){
+                attendanceThread.stopSync();
+            }
+            
             if (mode.equals("start")) {
+                
                 if (request.getParameter("authtoken") != null && !request.getParameter("authtoken").equals("")) {
                     obj.put("authtoken", request.getParameter("authtoken"));
                 }
@@ -97,7 +102,7 @@ public class ClientAction extends org.apache.struts.action.Action {
                 if (request.getParameter("lastRequestTime") != null && !request.getParameter("lastRequestTime").equals("")) {
                     obj.put("lastRequestTime", request.getParameter("lastRequestTime"));
                 }
-                
+
                 if (request.getParameter("proxyHostIP") != null && !request.getParameter("proxyHostIP").equals("")) {
                     obj.put("proxyHostIP", request.getParameter("proxyHostIP"));
                 }
@@ -110,7 +115,7 @@ public class ClientAction extends org.apache.struts.action.Action {
                 if (request.getParameter("proxyPwd") != null && !request.getParameter("proxyPwd").equals("")) {
                     obj.put("proxyPwd", request.getParameter("proxyPwd"));
                 }
-                
+
                 if (request.getParameter("dburl") != null && !request.getParameter("dburl").equals("")) {
                     obj.put("dburl", request.getParameter("dburl"));
                 }
@@ -131,25 +136,16 @@ public class ClientAction extends org.apache.struts.action.Action {
             attendanceThread.startSync();
             obj = new JSONObject();
             obj.put("isRunning", attendanceThread.isRunning());
-            obj.put("filepath", new File("ss").getAbsolutePath());
             out.print(obj);
-            
-            
         } else if (mode.equals("stop")) {
-            
             attendanceThread.stopSync();
             out.print(attendanceThread.isRunning());
-            
             attendanceThread = null;
-            
         } else if (mode.equals("getLogs")) {
-            
             JSONObject obj = new JSONObject();
-            obj.put("statinfo", ConfigInfo.getstatinfo());
-            obj.put("logs", LogFile.getLogs());
-            obj.put("logs1", confobj);
+            String fileName="zpa_logs_"+request.getParameter("fileName")+".log";
+            obj.put("logs", LogFile.getLogs(fileName));
             out.print(obj);
-            
         } else {
             out.print("invalid input");
         }

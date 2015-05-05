@@ -26,7 +26,6 @@ public class ConfigInfo {
     protected static int dataCount = 0;
     protected static long timeTakenTotal = 0;
     protected static String currentFileName = null;
-    protected static StringBuilder logString = new StringBuilder();
     private static final String ALGORITHM = "AES";
     private static final String UNICODE_FORMAT = "UTF8";
     private static final Logger LOGGER = Logger.getLogger("ConfigInfo");
